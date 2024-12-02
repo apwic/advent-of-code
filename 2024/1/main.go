@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"sort"
 	"strconv"
@@ -13,7 +12,7 @@ import (
 func main() {
 	file, err := os.Open("input.txt")
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 		return
 	}
 	defer file.Close()
@@ -30,7 +29,7 @@ func main() {
 
 		num, err := strconv.Atoi(part[0])
 		if err != nil {
-			log.Println(err)
+			fmt.Println(err)
 			return
 		}
 
@@ -45,7 +44,7 @@ func main() {
 
 		num, err = strconv.Atoi(part[1])
 		if err != nil {
-			log.Println(err)
+			fmt.Println(err)
 			return
 		}
 
@@ -88,4 +87,6 @@ func main() {
 	}
 
 	fmt.Println("Puzzle 2: ", puzzle_2)
+
+	return
 }
