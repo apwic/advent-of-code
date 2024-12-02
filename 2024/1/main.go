@@ -19,6 +19,8 @@ func main() {
 	defer file.Close()
 
 	var first, second []int
+	first_map := map[int]int{}
+	second_map := map[int]int{}
 
 	scanner := bufio.NewScanner(file)
 
@@ -33,6 +35,13 @@ func main() {
 		}
 
 		first = append(first, num)
+		val, exist := first_map[num]
+
+		if exist {
+			first_map[num] = val + 1
+		} else {
+			first_map[num] = 1
+		}
 
 		num, err = strconv.Atoi(part[1])
 		if err != nil {
@@ -41,6 +50,13 @@ func main() {
 		}
 
 		second = append(second, num)
+		val, exist = second_map[num]
+
+		if exist {
+			second_map[num] = val + 1
+		} else {
+			second_map[num] = 1
+		}
 	}
 
 	sort.Slice(first, func(i, j int) bool {
@@ -51,7 +67,7 @@ func main() {
 		return second[i] < second[j]
 	})
 
-	ans := 0
+	puzzle_1 := 0
 
 	for i := 0; i < len(first); i++ {
 		distance := first[i] - second[i]
@@ -60,8 +76,16 @@ func main() {
 			distance *= -1
 		}
 
-		ans += distance
+		puzzle_1 += distance
 	}
 
-	fmt.Println(ans)
+	fmt.Println("Puzzle 1: ", puzzle_1)
+
+	puzzle_2 := 0
+
+	for key, val := range first_map {
+		puzzle_2 += key * val * second_map[key]
+	}
+
+	fmt.Println("Puzzle 2: ", puzzle_2)
 }
