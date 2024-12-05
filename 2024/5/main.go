@@ -66,9 +66,14 @@ func main() {
 	}
 
 	puzzle_1 := 0
+	puzzle_2 := 0
 	for _, page := range pages {
 		order := true
 
+		// puzzle 1
+		// check if any of the order of the element is inscorrect
+		// by checking the map of page[j] if page[i] exist then
+		// it is backward (the order is wrong)
 		for i := 0; i < len(page); i++ {
 			for j := i + 1; j < len(page); j++ {
 				if _, exist := rules[page[j]][page[i]]; exist {
@@ -84,8 +89,28 @@ func main() {
 
 		if order {
 			puzzle_1 += page[(len(page) / 2)]
+			continue
 		}
+
+		// puzzle 2
+		// use bubble sort since we can check the hashmap
+		for i := 0; i < len(page); i++ {
+			swap := false
+			for j := 0; j < len(page)-i-1; j++ {
+				if _, exist := rules[page[j+1]][page[j]]; exist {
+					page[j], page[j+1] = page[j+1], page[j]
+					swap = true
+				}
+			}
+
+			if !swap {
+				break
+			}
+		}
+
+		puzzle_2 += page[len(page)/2]
 	}
 
 	fmt.Println("puzzle 1: ", puzzle_1)
+	fmt.Println("puzzle 2: ", puzzle_2)
 }
