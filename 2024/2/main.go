@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func pop(s []int, i int) []int {
@@ -49,6 +50,7 @@ func safe_removal(report []int) bool {
 }
 
 func main() {
+	start := time.Now()
 	file, err := os.Open("input.txt")
 	if err != nil {
 		fmt.Println(err)
@@ -82,6 +84,8 @@ func main() {
 			puzzle_2++
 		}
 	}
+	elapsed := time.Since(start)
+	fmt.Println("Time elapsed: ", elapsed)
 
 	fmt.Println("Puzzle 1: ", puzzle_1)
 	fmt.Println("Puzzle 2: ", puzzle_1+puzzle_2)

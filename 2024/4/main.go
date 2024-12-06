@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 )
 
 func valid(m, n, i, j int) bool {
@@ -43,6 +44,7 @@ func check2(grid [][]string, i int, j int) bool {
 }
 
 func main() {
+	start := time.Now()
 	file, err := os.Open("input.txt")
 	if err != nil {
 		fmt.Println(err)
@@ -95,6 +97,8 @@ func main() {
 			}
 		}
 	}
+	elapsed := time.Since(start)
+	fmt.Println("Time elapsed: ", elapsed)
 
 	fmt.Println("puzzle 1: ", puzzle_1)
 	fmt.Println("puzzle 2: ", puzzle_2)

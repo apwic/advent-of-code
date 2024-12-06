@@ -7,9 +7,11 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
+	"time"
 )
 
 func main() {
+	start := time.Now()
 	file, err := os.Open("input.txt")
 	if err != nil {
 		fmt.Println(err)
@@ -88,6 +90,8 @@ func main() {
 			}
 		}
 	}
+	elapsed := time.Since(start)
+	fmt.Println("Time elapsed: ", elapsed)
 
 	fmt.Println("Puzzle 1: ", puzzle_1)
 	fmt.Println("Puzzle 2: ", puzzle_2)

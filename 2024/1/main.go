@@ -7,9 +7,11 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func main() {
+	start := time.Now()
 	file, err := os.Open("input.txt")
 	if err != nil {
 		fmt.Println(err)
@@ -67,6 +69,7 @@ func main() {
 	})
 
 	puzzle_1 := 0
+	puzzle_2 := 0
 
 	for i := 0; i < len(first); i++ {
 		distance := first[i] - second[i]
@@ -78,14 +81,14 @@ func main() {
 		puzzle_1 += distance
 	}
 
-	fmt.Println("Puzzle 1: ", puzzle_1)
-
-	puzzle_2 := 0
-
 	for key, val := range first_map {
 		puzzle_2 += key * val * second_map[key]
 	}
 
+	elapsed := time.Since(start)
+	fmt.Println("Time elapsed: ", elapsed)
+
+	fmt.Println("Puzzle 1: ", puzzle_1)
 	fmt.Println("Puzzle 2: ", puzzle_2)
 
 	return

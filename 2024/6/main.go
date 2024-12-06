@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 )
 
 const (
@@ -109,6 +110,7 @@ func path2(grid [][]string, rotation int, i int, j int, obs_i int, obs_j int) bo
 }
 
 func main() {
+	start := time.Now()
 	file, err := os.Open("input.txt")
 	if err != nil {
 		fmt.Println(err)
@@ -160,6 +162,9 @@ func main() {
 			}
 		}
 	}
+
+	elapsed := time.Since(start)
+	fmt.Println("Time elapsed: ", elapsed)
 
 	fmt.Println("puzzle 1: ", puzzle_1)
 	fmt.Println("puzzle 2: ", puzzle_2)
