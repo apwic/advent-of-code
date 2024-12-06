@@ -14,6 +14,18 @@ const (
 	GUARD    = "^"
 )
 
+type Vector struct {
+	x        int
+	y        int
+	rotation int
+}
+
+func printMatr(grid [][]string) {
+	for _, row := range grid {
+		fmt.Println(row)
+	}
+}
+
 func turn(rotation int) (int, int) {
 	rotation %= 360
 
@@ -53,12 +65,56 @@ func path(grid *[][]string, rotation int, i int, j int) {
 	}
 }
 
+func path2(grid [][]string, rotation int, i int, j int, obs_i int, obs_j int) bool {
+	gridCopy := make([][]string, len(grid))
+	for idx := range grid {
+		gridCopy[idx] = append([]string(nil), grid[idx]...)
+	}
+
+	visited := make(map[Vector]bool)
+	m, n := len(gridCopy), len((gridCopy)[0])
+	dx, dy := turn(rotation)
+	x, y := i+dx, j+dy
+
+	// add obstacle here
+	gridCopy[obs_i][obs_j] = OBSTACLE
+
+	for valid(m, n, x, y) {
+		curr := (gridCopy)[x][y]
+		vector := Vector{
+			x:        x,
+			y:        y,
+			rotation: rotation,
+		}
+
+		if visited[vector] {
+			return true
+		}
+
+		if curr == EMPTY || curr == VISITED {
+			visited[vector] = true
+			(gridCopy)[x][y] = VISITED
+		}
+
+		if curr == OBSTACLE {
+			x, y = x-dx, y-dy
+			rotation = (rotation + 90) % 360
+			dx, dy = turn(rotation)
+		}
+
+		x, y = x+dx, y+dy
+	}
+
+	return false
+}
+
 func main() {
 	file, err := os.Open("input.txt")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
 	var grid [][]string
@@ -83,16 +139,28 @@ func main() {
 		grid = append(grid, temp)
 	}
 
+	gridCopy := make([][]string, len(grid))
+	for idx := range grid {
+		gridCopy[idx] = append([]string(nil), grid[idx]...)
+	}
+
 	puzzle_1 := 0
-	path(&grid, 0, start_i, start_j)
-	for _, row := range grid {
-		fmt.Println(row)
-		for _, curr := range row {
-			if curr == VISITED {
-				puzzle_1++
+	puzzle_2 := 0
+	path(&gridCopy, 0, start_i, start_j)
+	for obs_i, row := range gridCopy {
+		for obs_j, curr := range row {
+			if curr != VISITED {
+				continue
+			}
+
+			puzzle_1++
+
+			if path2(grid, 0, start_i, start_j, obs_i, obs_j) {
+				puzzle_2++
 			}
 		}
 	}
 
 	fmt.Println("puzzle 1: ", puzzle_1)
+	fmt.Println("puzzle 2: ", puzzle_2)
 }
