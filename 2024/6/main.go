@@ -8,9 +8,10 @@ import (
 )
 
 const (
-	OBSTACLE = 9
-	EMPTY    = 0
-	VISITED  = 1
+	OBSTACLE = "#"
+	EMPTY    = "."
+	VISITED  = "X"
+	GUARD    = "^"
 )
 
 func turn(rotation int) (int, int) {
@@ -31,7 +32,7 @@ func valid(m, n, i, j int) bool {
 	return 0 <= i && i < m && 0 <= j && j < n
 }
 
-func path(grid *[][]int, rotation int, i int, j int) {
+func path(grid *[][]string, rotation int, i int, j int) {
 	m, n := len(*grid), len((*grid)[0])
 	dx, dy := turn(rotation)
 	i, j = i+dx, j+dy
@@ -60,19 +61,19 @@ func main() {
 	}
 
 	scanner := bufio.NewScanner(file)
-	var grid [][]int
+	var grid [][]string
 	start_i, start_j := 0, 0
 
 	for scanner.Scan() {
 		line := strings.Split(scanner.Text(), "")
-		temp := make([]int, 0)
+		temp := make([]string, 0)
 
 		for _, ch := range line {
-			if ch == "." {
+			if ch == EMPTY {
 				temp = append(temp, EMPTY)
-			} else if ch == "#" {
+			} else if ch == OBSTACLE {
 				temp = append(temp, OBSTACLE)
-			} else if ch == "^" {
+			} else if ch == GUARD {
 				start_i = len(grid)
 				start_j = len(temp)
 				temp = append(temp, VISITED)
