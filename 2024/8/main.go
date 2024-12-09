@@ -77,6 +77,14 @@ func main() {
 		return
 	}
 
+	grid2 := make([][]string, len(grid))
+	for idx := range grid {
+		grid2[idx] = append([]string(nil), grid[idx]...)
+	}
+
+	fmt.Println("before: ")
+	printMatr(grid)
+
 	m, n := len(grid), len(grid[0])
 
 	for _, val := range freq {
@@ -92,28 +100,59 @@ func main() {
 				diff_x := x_a - x_b
 				diff_y := y_a - y_b
 
-				if valid(m, n, x_a+diff_x, y_a+diff_y) {
-					grid[x_a+diff_x][y_a+diff_y] = "#"
+				x_a += diff_x
+				y_a += diff_y
+				flag := false
+
+				for valid(m, n, x_a, y_a) {
+					if !flag {
+						grid[x_a][y_a] = "#"
+						flag = true
+					}
+
+					grid2[x_a][y_a] = "#"
+					x_a += diff_x
+					y_a += diff_y
 				}
 
-				if valid(m, n, x_b-diff_x, y_b-diff_y) {
-					grid[x_b-diff_x][y_b-diff_y] = "#"
+				x_b -= diff_x
+				y_b -= diff_y
+				flag = false
+
+				for valid(m, n, x_b, y_b) {
+					if !flag {
+						grid[x_b][y_b] = "#"
+						flag = true
+					}
+
+					grid2[x_b][y_b] = "#"
+					x_b -= diff_x
+					y_b -= diff_y
 				}
 			}
 		}
 	}
 
 	puzzle_1 := 0
+	puzzle_2 := 0
 	for i := 0; i < m; i++ {
 		for j := 0; j < n; j++ {
 			if grid[i][j] == "#" {
 				puzzle_1++
 			}
+
+			if grid2[i][j] != "." {
+				puzzle_2++
+			}
 		}
 	}
+
+	fmt.Println("after: ")
+	printMatr(grid2)
 
 	elapsed := time.Since(start)
 	fmt.Println("Time elapsed : ", elapsed)
 
 	fmt.Println("puzzle 1: ", puzzle_1)
+	fmt.Println("puzzle 2: ", puzzle_2)
 }
