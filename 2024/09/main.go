@@ -50,21 +50,21 @@ func main() {
 	disk := make([]int, 0)
 	disk2 := make([]int, 0)
 	file_idx := 0
-	pos := make(map[int]int)
+	empty_space := make([]int, 0)
+	filled_space := make([]int, 0)
 
-	j := 0
 	for i, num := range nums {
-		pos[i] = j
-		j += num
 		// files if index if even
 		// free space if odd
 		if i%2 == 0 {
+			filled_space = append(filled_space, num)
 			for range num {
 				disk = append(disk, file_idx)
 				disk2 = append(disk2, file_idx)
 			}
 			file_idx++
 		} else {
+			empty_space = append(empty_space, num)
 			for range num {
 				disk = append(disk, -1)
 				disk2 = append(disk2, -1)
@@ -97,36 +97,42 @@ func main() {
 	}
 
 	// puzzle 2
-	id := 1
-	for j := len(nums) - 1; j >= 0; j -= 2 {
-		for k := id; k <= j; k += 2 {
-			// space is not enough
-			if nums[k] < nums[j] {
+	// puzzle 2
+	filled_idx = len(filled_space_idx) - 1
+	for i := len(filled_space) - 1; i >= 0; i-- {
+		// find empty space from the beginning
+		empty_idx = 0
+		swap := false
+		for j, space := range empty_space {
+			// no space, find next block
+			if space < filled_space[i] {
+				empty_idx += space
 				continue
 			}
 
-			// found the space
-			// fill the empty space with file
-			i := pos[k]
-			for l := 0; l < nums[j]; l++ {
-				disk2[i] = j / 2
-				i++
+			// empty index is ahead of the file blocks
+			if empty_space_idx[empty_idx] >= filled_space_idx[filled_idx] {
+				break
 			}
 
-			// fill with empty space
-			i = pos[j]
-			for l := 0; l < nums[j]; l++ {
-				disk2[i] = -1
-				i++
+			// there's space
+			// do swap here
+			swap = true
+			for range filled_space[i] {
+				disk2[empty_space_idx[empty_idx]], disk2[filled_space_idx[filled_idx]] = disk2[filled_space_idx[filled_idx]], disk2[empty_space_idx[empty_idx]]
+
+				empty_space_idx = delete(empty_space_idx, empty_idx)
+				filled_idx--
 			}
 
-			nums[k] -= nums[j]
-			pos[k] += nums[j]
-			nums[j] = 0
+			// reduce the empty space
+			empty_space[j] -= filled_space[i]
+			break
+		}
 
-			if nums[id] == -1 {
-				id += 2
-			}
+		// align the filled_idx
+		if !swap {
+			filled_idx -= filled_space[i]
 		}
 	}
 
