@@ -48,7 +48,7 @@ func valid(m, n, i, j int) bool {
 	return 0 <= i && i < m && 0 <= j && j < n
 }
 
-func BFS(grid [][]int, start Pos) int {
+func BFS(grid [][]int, start Pos) (int, int) {
 	directions := []Pos{
 		{x: -1, y: 0},
 		{x: 0, y: -1},
@@ -59,7 +59,8 @@ func BFS(grid [][]int, start Pos) int {
 	m, n := len(grid), len(grid[0])
 	queue := []Pos{start}
 	visited := make(map[Pos]bool)
-	point := 0
+	point_1 := 0
+	point_2 := 0
 
 	for len(queue) > 0 {
 		pos := queue[0]
@@ -68,7 +69,10 @@ func BFS(grid [][]int, start Pos) int {
 		if curr == 9 {
 			if _, exist := visited[pos]; !exist {
 				visited[pos] = true
-				point++
+				point_1++
+				point_2++
+			} else {
+				point_2++
 			}
 		}
 
@@ -84,7 +88,7 @@ func BFS(grid [][]int, start Pos) int {
 		}
 	}
 
-	return point
+	return point_1, point_2
 }
 
 func main() {
@@ -106,9 +110,13 @@ func main() {
 	}
 
 	puzzle_1 := 0
+	puzzle_2 := 0
 	for _, start := range startPos {
-		puzzle_1 += BFS(grid, start)
+		a, b := BFS(grid, start)
+		puzzle_1 += a
+		puzzle_2 += b
 	}
 
 	fmt.Println("puzzle 1:", puzzle_1)
+	fmt.Println("puzzle 2:", puzzle_2)
 }
