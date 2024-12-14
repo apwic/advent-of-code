@@ -3,7 +3,11 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"time"
@@ -11,9 +15,11 @@ import (
 
 var (
 	// x and y reversed for easier debugging
-	GRID_X = 103
-	GRID_Y = 101
-	TIME   = 100
+	GRID_X     = 103
+	GRID_Y     = 101
+	TIME       = 100
+	START_TIME = 0
+	END_TIME   = GRID_X * GRID_Y
 )
 
 type Pos struct {
@@ -31,6 +37,12 @@ func mod(a, b int) int {
 }
 
 func printMatr(grid [][]int) {
+	for _, row := range grid {
+		fmt.Println(row)
+	}
+}
+
+func printMatrAny(grid [][]any) {
 	for _, row := range grid {
 		fmt.Println(row)
 	}
@@ -71,18 +83,94 @@ func parseInput(fileName string) ([]Robot, error) {
 	return robots, nil
 }
 
-func place(robot Robot) (int, int) {
-	x := mod(robot.pos.x+TIME*robot.speed.x, GRID_X)
-	y := mod(robot.pos.y+TIME*robot.speed.y, GRID_Y)
+func place(robot Robot, time int) (int, int) {
+	x := mod(robot.pos.x+time*robot.speed.x, GRID_X)
+	y := mod(robot.pos.y+time*robot.speed.y, GRID_Y)
 
 	return x, y
 }
 
 func placeRobots(robots []Robot, grid *[][]int) {
 	for _, robot := range robots {
-		x, y := place(robot)
+		x, y := place(robot, TIME)
 		(*grid)[x][y] += 1
 	}
+}
+
+func placeRobots2(robots []Robot) {
+	outputDir := "grid_images"
+	err := os.MkdirAll(outputDir, os.ModePerm)
+	if err != nil {
+		fmt.Println("Error creating directory:", err)
+		return
+	}
+
+	initializeGrid := func() [][]string {
+		grid := make([][]string, GRID_X)
+		for i := range grid {
+			grid[i] = make([]string, GRID_Y)
+			for j := range grid[i] {
+				grid[i][j] = " "
+			}
+		}
+		return grid
+	}
+
+	for time := START_TIME; time <= END_TIME; time++ {
+		grid := initializeGrid()
+		for _, robot := range robots {
+			x, y := place(robot, time)
+			grid[x][y] = "X"
+		}
+
+		// Create an image from the grid
+		img := createImageFromGrid(grid)
+
+		// Save the image to the directory
+		fileName := filepath.Join(outputDir, fmt.Sprintf("%03d.png", time))
+		err := saveImage(fileName, img)
+		if err != nil {
+			fmt.Println("Error saving image:", err)
+			return
+		}
+
+		fmt.Println("Image saved:", fileName)
+	}
+}
+
+func createImageFromGrid(grid [][]string) *image.RGBA {
+	imgWidth := len(grid[0])
+	imgHeight := len(grid)
+	img := image.NewRGBA(image.Rect(0, 0, imgWidth, imgHeight))
+
+	// Define colors
+	robotColor := color.RGBA{255, 255, 255, 255}
+	emptyColor := color.RGBA{0, 0, 0, 255}
+
+	for y, row := range grid {
+		for x, cell := range row {
+			if cell == "X" {
+				img.Set(x, y, robotColor)
+			} else {
+				img.Set(x, y, emptyColor)
+			}
+		}
+	}
+	return img
+}
+
+func saveImage(fileName string, img *image.RGBA) error {
+	file, err := os.Create(fileName)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	err = png.Encode(file, img)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func findQuadrant(x, y int) int {
@@ -153,4 +241,6 @@ func main() {
 	fmt.Println("time elapsed:", time.Since(start))
 
 	fmt.Println("puzzle 1: ", puzzle_1)
+
+	placeRobots2(robots)
 }
