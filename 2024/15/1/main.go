@@ -160,7 +160,7 @@ func solve(grid [][]string, moves []string) int {
 
 func main() {
 	start := time.Now()
-	grid, moves := parseInput("input.txt")
+	grid, moves := parseInput("../input.txt")
 	puzzle_1 := solve(grid, moves)
 
 	fmt.Println("time elapsed:", time.Since(start))
