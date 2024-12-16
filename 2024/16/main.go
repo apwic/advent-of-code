@@ -14,6 +14,7 @@ var (
 	START = "S"
 	END   = "E"
 	WALL  = "#"
+	SEAT  = "O"
 
 	DIRECTIONS = map[string]Pos{
 		">": {x: 0, y: 1},
@@ -198,10 +199,97 @@ func Djikstra(grid [][]string, startPos Pos) int {
 	return -1
 }
 
+func DFS(grid [][]string, visited map[Pos]bool, targetCost int, move Move, path []Pos, result *[][]Pos) {
+	currPos := move.pos
+	currCost := move.cost
+
+	if visited[currPos] {
+		return
+	}
+	visited[currPos] = true
+	path = append(path, currPos)
+
+	if currCost > targetCost {
+		visited[currPos] = false
+		return
+	}
+
+	if grid[currPos.x][currPos.y] == END && currCost == targetCost {
+		validPath := make([]Pos, len(path))
+		copy(validPath, path)
+		*result = append(*result, validPath)
+	}
+
+	for _, clockwise := range []bool{true, false} {
+		rotatedPos := Pos{
+			x:   currPos.x,
+			y:   currPos.y,
+			dir: rotate(currPos.dir, clockwise),
+		}
+
+		if !visited[rotatedPos] {
+			DFS(grid, visited, targetCost, Move{pos: rotatedPos, cost: currCost + ROTATE_COST}, path, result)
+		}
+	}
+
+	d := DIRECTIONS[currPos.dir]
+	nx, ny := currPos.x+d.x, currPos.y+d.y
+	if grid[nx][ny] != WALL {
+		forwardPos := Pos{
+			x:   nx,
+			y:   ny,
+			dir: currPos.dir,
+		}
+
+		if !visited[forwardPos] {
+			DFS(grid, visited, targetCost, Move{pos: forwardPos, cost: currCost + FORWARD_COST}, path, result)
+		}
+	}
+
+	visited[currPos] = false
+	path = path[:len(path)-1]
+}
+
+func findPaths(grid [][]string, start Pos, targetCost int) [][]Pos {
+	visited := make(map[Pos]bool)
+	var results [][]Pos
+	DFS(grid, visited, targetCost, Move{pos: start, cost: 0}, []Pos{}, &results)
+	return results
+}
+
+func fillGrid(grid *[][]string, path []Pos) {
+	for _, p := range path {
+		(*grid)[p.x][p.y] = SEAT
+	}
+}
+
+func countSeat(grid [][]string) int {
+	m, n := len(grid), len(grid[0])
+	count := 0
+
+	for i := range m {
+		for j := range n {
+			if grid[i][j] == SEAT {
+				count++
+			}
+		}
+	}
+
+	return count
+}
+
 func solve(grid [][]string) {
 	startPos := findStartPos(grid)
 	puzzle_1 := Djikstra(grid, startPos)
 	fmt.Println("puzzle 1:", puzzle_1)
+
+	results := findPaths(grid, startPos, puzzle_1)
+	for _, path := range results {
+		fillGrid(&grid, path)
+	}
+
+	puzzle_2 := countSeat(grid)
+	fmt.Println("puzzle 2:", puzzle_2)
 }
 
 func main() {
