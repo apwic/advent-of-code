@@ -2,6 +2,7 @@ package main
 
 type Move struct {
 	pos  Pos
+	prev Pos
 	cost int
 }
 

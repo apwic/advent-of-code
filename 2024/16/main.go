@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"container/heap"
 	"fmt"
-	"math"
 	"os"
 	"strings"
 	"time"
@@ -26,6 +25,11 @@ var (
 	FORWARD_COST = 1
 	ROTATE_COST  = 1000
 )
+
+type Point struct {
+	x int
+	y int
+}
 
 type Pos struct {
 	x   int
@@ -93,202 +97,90 @@ func exist(visited map[Pos]bool, pos Pos) bool {
 	return false
 }
 
-// using BFS in each step either go forward or rotate
-func BFS(grid [][]string, startPos Pos) int {
-	visited := make(map[Pos]bool)
-	visited[startPos] = true
-	queue := []Move{{pos: startPos, cost: 0}}
-	cost := math.MaxInt
-
-	for len(queue) > 0 {
-		currPos := queue[0].pos
-		currCost := queue[0].cost
-		queue = queue[1:]
-
-		if grid[currPos.x][currPos.y] == END {
-			cost = min(cost, currCost)
-			continue
-		}
-
-		d := DIRECTIONS[currPos.dir]
-		nx, ny := currPos.x+d.x, currPos.y+d.y
-
-		// check for rotate, doesn't matter if encounter a wall or no
-		// rotate can be performed any step
-		for _, clockwise := range []bool{true, false} {
-			rotatedPos := Pos{
-				x:   currPos.x,
-				y:   currPos.y,
-				dir: rotate(currPos.dir, clockwise),
-			}
-
-			if !exist(visited, rotatedPos) {
-				visited[rotatedPos] = true
-				queue = append(queue, Move{pos: rotatedPos, cost: currCost + ROTATE_COST})
-			}
-		}
-
-		// if next is not wall then can move forward
-		if grid[nx][ny] != WALL {
-			forwardPos := Pos{
-				x:   nx,
-				y:   ny,
-				dir: currPos.dir,
-			}
-
-			if !exist(visited, forwardPos) {
-				visited[forwardPos] = true
-				queue = append(queue, Move{pos: forwardPos, cost: currCost + FORWARD_COST})
-			}
-		}
-	}
-
-	return cost
-}
-
-// using Djikstra to find the smallest cost
-func Djikstra(grid [][]string, startPos Pos) int {
-	visited := make(map[Pos]bool)
+// using Dijkstra to find the smallest cost
+func Dijkstra(grid [][]string, startPos Pos) (int, int) {
+	visited := make(map[Pos]int)
+	prev := make(map[Pos][]Pos)
 	pq := &PriorityQueue{}
 	heap.Init(pq)
-	heap.Push(pq, &Move{pos: startPos, cost: 0})
+	heap.Push(pq, &Move{pos: startPos, cost: 0, prev: Pos{x: -1, y: -1}})
+
+	var lastPos Pos
+	var score int
 
 	for pq.Len() > 0 {
 		curr := heap.Pop(pq).(*Move)
-		currPos := curr.pos
-		currCost := curr.cost
 
-		if visited[currPos] {
+		if _, exist := visited[curr.pos]; exist {
+			if curr.cost == visited[curr.pos] {
+				prev[curr.pos] = append(prev[curr.pos], curr.prev)
+			}
 			continue
 		}
-		visited[currPos] = true
 
-		if grid[currPos.x][currPos.y] == END {
-			return currCost
+		visited[curr.pos] = curr.cost
+
+		if curr.prev.x != -1 && curr.prev.y != -1 {
+			prev[curr.pos] = []Pos{curr.prev}
+		}
+
+		if grid[curr.pos.x][curr.pos.y] == END {
+			score = curr.cost
+			lastPos = curr.pos
+			break
 		}
 
 		// check for rotate, doesn't matter if encounter a wall or no
 		// rotate can be performed any step
 		for _, clockwise := range []bool{true, false} {
 			rotatedPos := Pos{
-				x:   currPos.x,
-				y:   currPos.y,
-				dir: rotate(currPos.dir, clockwise),
+				x:   curr.pos.x,
+				y:   curr.pos.y,
+				dir: rotate(curr.pos.dir, clockwise),
 			}
 
-			if !visited[rotatedPos] {
-				heap.Push(pq, &Move{pos: rotatedPos, cost: currCost + ROTATE_COST})
-			}
+			heap.Push(pq, &Move{
+				pos:  rotatedPos,
+				cost: curr.cost + ROTATE_COST,
+				prev: curr.pos,
+			})
 		}
 
-		d := DIRECTIONS[currPos.dir]
-		nx, ny := currPos.x+d.x, currPos.y+d.y
+		d := DIRECTIONS[curr.pos.dir]
+		nx, ny := curr.pos.x+d.x, curr.pos.y+d.y
 		if grid[nx][ny] != WALL {
 			forwardPos := Pos{
 				x:   nx,
 				y:   ny,
-				dir: currPos.dir,
+				dir: curr.pos.dir,
 			}
 
-			if !visited[forwardPos] {
-				heap.Push(pq, &Move{pos: forwardPos, cost: currCost + FORWARD_COST})
-			}
+			heap.Push(pq, &Move{
+				pos:  forwardPos,
+				cost: curr.cost + FORWARD_COST,
+				prev: curr.pos,
+			})
 		}
 	}
 
-	return -1
-}
+	points := map[Point]bool{}
+	nodes := []Pos{lastPos}
 
-func DFS(grid [][]string, visited map[Pos]bool, targetCost int, move Move, path []Pos, result *[][]Pos) {
-	currPos := move.pos
-	currCost := move.cost
+	for len(nodes) > 0 {
+		node := nodes[0]
+		nodes = nodes[1:]
 
-	if visited[currPos] {
-		return
-	}
-	visited[currPos] = true
-	path = append(path, currPos)
-
-	if currCost > targetCost {
-		visited[currPos] = false
-		return
+		points[Point{x: node.x, y: node.y}] = true
+		nodes = append(nodes, prev[node]...)
 	}
 
-	if grid[currPos.x][currPos.y] == END && currCost == targetCost {
-		validPath := make([]Pos, len(path))
-		copy(validPath, path)
-		*result = append(*result, validPath)
-	}
-
-	for _, clockwise := range []bool{true, false} {
-		rotatedPos := Pos{
-			x:   currPos.x,
-			y:   currPos.y,
-			dir: rotate(currPos.dir, clockwise),
-		}
-
-		if !visited[rotatedPos] {
-			DFS(grid, visited, targetCost, Move{pos: rotatedPos, cost: currCost + ROTATE_COST}, path, result)
-		}
-	}
-
-	d := DIRECTIONS[currPos.dir]
-	nx, ny := currPos.x+d.x, currPos.y+d.y
-	if grid[nx][ny] != WALL {
-		forwardPos := Pos{
-			x:   nx,
-			y:   ny,
-			dir: currPos.dir,
-		}
-
-		if !visited[forwardPos] {
-			DFS(grid, visited, targetCost, Move{pos: forwardPos, cost: currCost + FORWARD_COST}, path, result)
-		}
-	}
-
-	visited[currPos] = false
-	path = path[:len(path)-1]
-}
-
-func findPaths(grid [][]string, start Pos, targetCost int) [][]Pos {
-	visited := make(map[Pos]bool)
-	var results [][]Pos
-	DFS(grid, visited, targetCost, Move{pos: start, cost: 0}, []Pos{}, &results)
-	return results
-}
-
-func fillGrid(grid *[][]string, path []Pos) {
-	for _, p := range path {
-		(*grid)[p.x][p.y] = SEAT
-	}
-}
-
-func countSeat(grid [][]string) int {
-	m, n := len(grid), len(grid[0])
-	count := 0
-
-	for i := range m {
-		for j := range n {
-			if grid[i][j] == SEAT {
-				count++
-			}
-		}
-	}
-
-	return count
+	return score, len(points)
 }
 
 func solve(grid [][]string) {
 	startPos := findStartPos(grid)
-	puzzle_1 := Djikstra(grid, startPos)
+	puzzle_1, puzzle_2 := Dijkstra(grid, startPos)
 	fmt.Println("puzzle 1:", puzzle_1)
-
-	results := findPaths(grid, startPos, puzzle_1)
-	for _, path := range results {
-		fillGrid(&grid, path)
-	}
-
-	puzzle_2 := countSeat(grid)
 	fmt.Println("puzzle 2:", puzzle_2)
 }
 
