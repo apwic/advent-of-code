@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Register struct {
@@ -121,7 +123,7 @@ func (r *Register) combo(num int) int {
 	return -1
 }
 
-func (r *Register) Operate(op int, num int) {
+func (r *Register) operate(op int, num int) {
 	switch op {
 	case 0:
 		r.adv(r.combo(num))
@@ -144,9 +146,12 @@ func (r *Register) Operate(op int, num int) {
 }
 
 func (r *Register) Run() {
-	a := r.Program[r.Pointer]
-	b := r.Program[r.Pointer+1]
-	r.Operate(a, b)
+	for r.Pointer < len(r.Program) {
+
+		a := r.Program[r.Pointer]
+		b := r.Program[r.Pointer+1]
+		r.operate(a, b)
+	}
 }
 
 func (r *Register) String() string {
@@ -159,17 +164,51 @@ func (r *Register) String() string {
 	return sb.String()[:len(sb.String())-1]
 }
 
-func solve(fileName string) {
-	register := parseInput(fileName)
-	n := len(register.Program)
-
-	for register.Pointer < n {
-		register.Run()
+func Reverse(register Register) int {
+	program := make([]int, len(register.Program))
+	for i := 0; i < len(register.Program); i++ {
+		program[i] = register.Program[i]
 	}
 
+	A := 0
+
+	for n := len(program) - 1; n >= 0; n-- {
+		A <<= 3
+		mock := Register{
+			A:       A,
+			B:       register.B,
+			C:       register.C,
+			Program: register.Program,
+			Pointer: 0,
+			Out:     []int{},
+		}
+		mock.Run()
+
+		for !slices.Equal(mock.Out, program[n:]) {
+			A++
+			mock.A = A
+			mock.Out = []int{}
+			mock.Pointer = 0
+			mock.Run()
+		}
+	}
+
+	return A
+}
+
+func Solve(fileName string) {
+	start := time.Now()
+
+	register := parseInput(fileName)
+	register.Run()
+
+	A := Reverse(register)
+
+	fmt.Println("time elapsed:", time.Since(start))
 	fmt.Println("puzzle 1:", register.String())
+	fmt.Println("puzzle 2:", A)
 }
 
 func main() {
-	solve("input.txt")
+	Solve("input.txt")
 }
