@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var (
@@ -48,17 +49,11 @@ func parseInput(fileName string) []Pos {
 
 	scanner := bufio.NewScanner(file)
 	pos := []Pos{}
-	line := 0
 	for scanner.Scan() {
-		if line == SIZE {
-			break
-		}
-
 		text := strings.Split(scanner.Text(), ",")
 		y, _ := strconv.Atoi(text[0])
 		x, _ := strconv.Atoi(text[1])
 		pos = append(pos, Pos{x: x, y: y})
-		line++
 	}
 
 	return pos
@@ -117,12 +112,29 @@ func BFS(grid [][]string) int {
 	return -1
 }
 
-func solve(fileName string) {
-	pos := parseInput(fileName)
-	grid := createGrid(pos)
+func checkExit(pos []Pos) Pos {
+	for n := SIZE + 1; n < len(pos); n++ {
+		grid := createGrid(pos[:n])
+		cost := BFS(grid)
 
+		if cost == -1 {
+			return pos[n-1]
+		}
+	}
+
+	return Pos{}
+}
+
+func solve(fileName string) {
+	start := time.Now()
+	pos := parseInput(fileName)
+	grid := createGrid(pos[:SIZE])
 	puzzle_1 := BFS(grid)
+	puzzle_2 := checkExit(pos)
+
+	fmt.Println("time elapsed:", time.Since(start))
 	fmt.Println("puzzle 1:", puzzle_1)
+	fmt.Printf("puzzle 2: %d,%d\n", puzzle_2.y, puzzle_2.x)
 }
 
 func main() {
