@@ -5,14 +5,15 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 )
 
-func parseInput(fileName string) (map[string]bool, []string) {
+func parseInput(fileName string) ([]string, []string) {
 	file, _ := os.Open(fileName)
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
-	patterns := map[string]bool{}
+	patterns := []string{}
 	towels := []string{}
 	i := 0
 
@@ -21,8 +22,7 @@ func parseInput(fileName string) (map[string]bool, []string) {
 			line := strings.Split(scanner.Text(), ",")
 
 			for _, l := range line {
-				pattern := strings.TrimSpace(l)
-				patterns[pattern] = true
+				patterns = append(patterns, strings.TrimSpace(l))
 			}
 		} else if i > 1 {
 			towels = append(towels, strings.TrimSpace(scanner.Text()))
@@ -34,42 +34,41 @@ func parseInput(fileName string) (map[string]bool, []string) {
 	return patterns, towels
 }
 
-func DP(towel string, patterns map[string]bool) bool {
-	n := len(towel)
-	dp := make([]bool, n)
+func DP(towel string, patterns []string, cache *map[string]int) int {
+	if _, exist := (*cache)[towel]; !exist {
+		if len(towel) == 0 {
+			return 1
+		}
 
-	for i := range n {
-		for pattern := range patterns {
-			n_p := len(pattern)
-
-			// out of bounds
-			if i < n_p-1 {
-				continue
-			}
-
-			if i == n_p-1 || dp[i-n_p] {
-				if towel[i-n_p+1:i+1] == pattern {
-					dp[i] = true
-					break
-				}
+		count := 0
+		for _, pattern := range patterns {
+			if strings.HasPrefix(towel, pattern) {
+				count += DP(towel[len(pattern):], patterns, cache)
 			}
 		}
+		(*cache)[towel] += count
 	}
 
-	return dp[n-1]
+	return (*cache)[towel]
 }
 
 func solve(fileName string) {
+	start := time.Now()
 	patterns, towels := parseInput(fileName)
-	count := 0
+	cache := make(map[string]int)
+	puzzle_1, puzzle_2 := 0, 0
 
 	for _, towel := range towels {
-		if DP(towel, patterns) {
-			count++
+		count := DP(towel, patterns, &cache)
+		if count > 0 {
+			puzzle_1++
 		}
+		puzzle_2 += count
 	}
 
-	fmt.Println("puzzle 1:", count)
+	fmt.Println("time elapsed:", time.Since(start))
+	fmt.Println("puzzle 1:", puzzle_1)
+	fmt.Println("puzzle 2:", puzzle_2)
 }
 
 func main() {
