@@ -40,3 +40,12 @@ cost. Previous cost is cost that is made by following the regular path, and the
 current cost is that the cheat cost. This cheat cost is made by adding the
 first cost before the cheat start and add it by the obstacle that you pass
 through.
+
+## Part 2
+
+The part 2 increased the amount of the cheats allowed from 2 to 20. My imple-
+mentation before for part 1 was taking too long, as I iterate through the
+direction (Up, Down, Left, Right). Then, I was looking for other approach and
+I checked the forum for different approach. I used the term offset which search
+for the radius (in this case is the amount of the cheats). Then, I need to
+adjust the iteration and how to handle the distance.

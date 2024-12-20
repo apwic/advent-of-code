@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math"
 	"os"
 	"strings"
 )
@@ -19,14 +20,21 @@ var (
 		{x: 0, y: -1}, // LEFT
 		{x: -1, y: 0}, // UP
 	}
-
-	THRESHOLD = 100
-	MAX_CHEAT = 2
 )
 
 type Pos struct {
 	x int
 	y int
+}
+
+type Shortcut struct {
+	start Pos
+	end   Offset
+}
+
+type Offset struct {
+	pos      Pos
+	distance int
 }
 
 func printMatrStr(grid [][]string) {
@@ -108,48 +116,60 @@ func DFS(grid [][]string, curr Pos, cost *[][]int, path *[]Pos) {
 	}
 }
 
-func bypass(grid [][]string, cost [][]int, pos Pos, amount int, prevCost int) int {
-	count := 0
+func distance(start, end Pos) int {
+	xDistance := math.Abs(float64(start.x - end.x))
+	yDistance := math.Abs(float64(start.y - end.y))
+	return int(xDistance + yDistance)
+}
 
-	for _, d := range DIRECTIONS {
-		nx, ny := pos.x+d.x, pos.y+d.y
+func offsets(from Pos, radius int) []Offset {
+	result := []Offset{}
 
-		if !valid(grid, nx, ny) {
-			continue
-		}
+	for y := radius * -1; y <= radius; y++ {
+		for x := radius * -1; x <= radius; x++ {
+			candidatePoint := Pos{from.x + x, from.y + y}
+			candidate := Offset{
+				candidatePoint,
+				distance(from, candidatePoint),
+			}
 
-		if amount < MAX_CHEAT {
-			count += bypass(grid, cost, Pos{x: nx, y: ny}, amount+1, prevCost)
-			continue
-		}
-
-		if grid[nx][ny] == WALL {
-			continue
-		}
-
-		if grid[nx][ny] == EMPTY || grid[nx][ny] == END {
-			newCost := prevCost + amount
-			currCost := cost[nx][ny]
-
-			if currCost-newCost >= THRESHOLD {
-				count++
+			if candidate.distance > 0 && candidate.distance <= radius {
+				result = append(result, candidate)
 			}
 		}
 	}
 
-	return count
+	return result
 }
 
-func cheat(grid [][]string, path []Pos, cost [][]int) int {
-	count := 0
-	for _, pos := range path {
-		count += bypass(grid, cost, pos, 1, cost[pos.x][pos.y])
+func cheat(grid [][]string, path []Pos, cost [][]int, radius int) map[int]int {
+	shortcuts := make(map[Shortcut]int)
+	for _, current := range path {
+		step := cost[current.x][current.y]
+		offsets := offsets(current, radius)
+		for _, offset := range offsets {
+			if !valid(grid, offset.pos.x, offset.pos.y) {
+				continue
+			}
+			routeStep := cost[offset.pos.x][offset.pos.y]
+
+			saving := routeStep - step - offset.distance
+			if saving > 0 {
+				shortcuts[Shortcut{current, offset}] = saving
+			}
+		}
 	}
 
-	return count
+	// Transform to summary.
+	result := make(map[int]int)
+	for _, saving := range shortcuts {
+		result[saving]++
+	}
+
+	return result
 }
 
-func solve(fileName string) {
+func solve(puzzle int, fileName string, threshold int, radius int) {
 	grid := parseInput(fileName)
 	start, _ := findPos(grid)
 	m, n := len(grid), len(grid[0])
@@ -163,10 +183,19 @@ func solve(fileName string) {
 	}
 
 	DFS(grid, start, &cost, &path)
-	puzzle_1 := cheat(grid, path, cost)
-	fmt.Println("puzzle 1:", puzzle_1)
+	result := cheat(grid, path, cost, radius)
+
+	count := 0
+	for time, freq := range result {
+		if time >= threshold {
+			count += freq
+		}
+	}
+
+	fmt.Printf("puzzle %d: %d\n", puzzle, count)
 }
 
 func main() {
-	solve("input.txt")
+	solve(1, "input.txt", 100, 2)
+	solve(2, "input.txt", 100, 20)
 }
