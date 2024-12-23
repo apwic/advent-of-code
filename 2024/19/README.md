@@ -1,4 +1,4 @@
-## Day 19
+## Day 19: Linen Layout
 
 This problem can be simplified to, given some pattern, determine if a string
 can be made from that pattern. Based on that my first attemp was to use brute
