@@ -2,13 +2,14 @@ import * as fs from "fs"
 
 const input = fs.readFileSync("input.txt", "utf-8").trim()
 const lines: string[] = input.split("\n")
-let start: number = 50;
-let ans: number = 0;
+let start = 50;
+let ans = 0;
 
 for (const line of lines) {
-	const rotation: string | undefined = line[0];
-	const rotationValueStr: string | undefined = line.slice(1);
-	let rotationValue: number = parseInt(rotationValueStr, 10);
+	const rotation = line[0];
+	const rotationValueStr = line.slice(1);
+	let rotationValue = parseInt(rotationValueStr, 10);
+	// mod 100 for value that is more than 100
 	rotationValue %= 100
 
 	if (rotation === "L") {
